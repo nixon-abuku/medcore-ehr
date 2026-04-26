@@ -60,18 +60,21 @@ Open http://localhost:3000
 | PostgreSQL | localhost:5432 | medcore / medcore |
 
 ## End-to-End Message Flow
+
+```
 Place lab order in MedCore
-↓
+        ↓
 ORM^O01 sent to Mirth Connect via MLLP
-↓
+        ↓
 Mirth routes to Mock Lab (LIS) on port 6662
-↓
+        ↓
 Mock Lab generates realistic values with LOINC codes
-↓
+        ↓
 ORU^R01 result sent back through Mirth
-↓
+        ↓
 Result appears automatically in Results Inbox
 with OBX values, abnormal flags (H/L/HH/LL)
+```
 
 ## What You Learn Building This
 
