@@ -1,0 +1,429 @@
+
+# ─────────────────────────────────────────────
+#  MedCore EHR — Training Environment
+#  Module 0: Foundation
+# ─────────────────────────────────────────────
+#
+#  Ports at a glance:
+#    Frontend       → http://localhost:3000
+#    API Gateway    → http://localhost:3001
+#    HAPI FHIR      → http://localhost:8080
+#    Mirth Admin    → https://localhost:8443  (admin / admin)
+#    Mirth MLLP     → localhost:6661
+#    Keycloak       → http://localhost:8090   (admin / admin)
+#    RabbitMQ UI    → http://localhost:15672  (guest / guest)
+#    PostgreSQL     → localhost:5432          (medcore / medcore)
+# ─────────────────────────────────────────────
+
+networks:
+  medcore-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  mirth-data:
+  hapi-fhir-data:
+  keycloak-data:
+  rabbitmq-data:
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: medcore-postgres
+    environment:
+      POSTGRES_DB: medcore
+      POSTGRES_USER: medcore
+      POSTGRES_PASSWORD: medcore
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    networks:
+      - medcore-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medcore"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── RabbitMQ ────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: medcore-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - medcore-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── Keycloak (Auth / SMART on FHIR) ─────────
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: medcore-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/medcore
+      KC_DB_USERNAME: medcore
+      KC_DB_PASSWORD: medcore
+      KC_HTTP_PORT: 8090
+    ports:
+      - "8090:8090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medcore-net
+
+  # ── HAPI FHIR R4 Server ─────────────────────
+  hapi-fhir:
+    image: hapiproject/hapi:latest
+    container_name: medcore-fhir
+    environment:
+      hapi.fhir.fhir_version: R4
+      spring.datasource.url: jdbc:postgresql://postgres:5432/medcore
+      spring.datasource.username: medcore
+      spring.datasource.password: medcore
+      spring.datasource.driverClassName: org.postgresql.Driver
+      spring.jpa.properties.hibernate.dialect: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgres94Dialect
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medcore-net
+    volumes:
+      - hapi-fhir-data:/data/hapi
+
+  # ── Mirth Connect (Interface Engine) ────────
+  mirth-connect:
+    image: nextgenhealthcare/connect:latest
+    container_name: medcore-mirth
+    environment:
+      DATABASE: postgres
+      DATABASE_URL: jdbc:postgresql://postgres:5432/medcore
+      DATABASE_USERNAME: medcore
+      DATABASE_PASSWORD: medcore
+      KEYSTORE_STOREPASS: changeme
+      KEYSTORE_KEYPASS: changeme
+    ports:
+      - "8444:8443"   # Admin web UI
+      - "6661:6661"   # MLLP listener (HL7 v2)
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medcore-net
+    volumes:
+      - mirth-data:/opt/connect/appdata
+
+  # ── API Gateway ─────────────────────────────
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: medcore-gateway
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medcore
+      DB_USER: medcore
+      DB_PASSWORD: medcore
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      FHIR_BASE_URL: http://hapi-fhir:8080/fhir
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - medcore-net
+    volumes:
+      - ./services/gateway:/app
+      - /app/node_modules
+
+  # ── Frontend ─────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: medcore-frontend
+    environment:
+      VITE_API_URL: http://localhost:3001
+      VITE_FHIR_URL: http://localhost:8080/fhir
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gateway
+    networks:
+      - medcore-net
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  # ── ADT Service — Module 1 ───────────────────
+  adt:
+    build:
+      context: ./services/adt
+      dockerfile: Dockerfile
+    container_name: medcore-adt
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medcore
+      DB_USER: medcore
+      DB_PASSWORD: medcore
+      MIRTH_HOST: mirth-connect
+      MIRTH_PORT: 6661
+      FHIR_BASE_URL: http://hapi-fhir:8080/fhir
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medcore-net
+    volumes:
+      - ./services/adt:/app
+      - /app/node_modules
+
+  # ── Scheduling Service — Module 2 ────────────
+  scheduling:
+    build:
+      context: ./services/scheduling
+      dockerfile: Dockerfile
+    container_name: medcore-scheduling
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medcore
+      DB_USER: medcore
+      DB_PASSWORD: medcore
+      MIRTH_HOST: mirth-connect
+      MIRTH_PORT: 6661
+      FHIR_BASE_URL: http://hapi-fhir:8080/fhir
+    ports:
+      - "3003:3003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medcore-net
+    volumes:
+      - ./services/scheduling:/app
+      - /app/node_modules
+
+  # ── Orders Service — Module 3 ─────────────────
+  orders:
+    build:
+      context: ./services/orders
+      dockerfile: Dockerfile
+    container_name: medcore-orders
+    environment:
+      NODE_ENV: development
+      PORT: 3004
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medcore
+      DB_USER: medcore
+      DB_PASSWORD: medcore
+      MIRTH_HOST: mirth-connect
+      MIRTH_PORT: 6661
+      FHIR_BASE_URL: http://hapi-fhir:8080/fhir
+    ports:
+      - "3004:3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medcore-net
+    volumes:
+      - ./services/orders:/app
+      - /app/node_modules
+
+  # ── Results Service — Module 4 ────────────────
+  results:
+    build:
+      context: ./services/results
+      dockerfile: Dockerfile
+    container_name: medcore-results
+    environment:
+      NODE_ENV: development
+      PORT: 3005
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medcore
+      DB_USER: medcore
+      DB_PASSWORD: medcore
+      MIRTH_HOST: mirth-connect
+      MIRTH_PORT: 6661
+    ports:
+      - "3005:3005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medcore-net
+    volumes:
+      - ./services/results:/app
+      - /app/node_modules
+
+  # ── Documentation Service — Module 5 ─────────
+  documentation:
+    build:
+      context: ./services/documentation
+      dockerfile: Dockerfile
+    container_name: medcore-documentation
+    environment:
+      NODE_ENV: development
+      PORT: 3006
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medcore
+      DB_USER: medcore
+      DB_PASSWORD: medcore
+      MIRTH_HOST: mirth-connect
+      MIRTH_PORT: 6661
+    ports:
+      - "3006:3006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medcore-net
+    volumes:
+      - ./services/documentation:/app
+      - /app/node_modules
+
+  # ── Billing Service — Module 6 ────────────────
+  billing:
+    build:
+      context: ./services/billing
+      dockerfile: Dockerfile
+    container_name: medcore-billing
+    environment:
+      NODE_ENV: development
+      PORT: 3007
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medcore
+      DB_USER: medcore
+      DB_PASSWORD: medcore
+      MIRTH_HOST: mirth-connect
+      MIRTH_PORT: 6661
+    ports:
+      - "3007:3007"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medcore-net
+    volumes:
+      - ./services/billing:/app
+      - /app/node_modules
+
+  # ── Mock Lab (LIS) — Module 7 ─────────────────
+  mock-lab:
+    build:
+      context: ./mock-systems/mock-lab
+      dockerfile: Dockerfile
+    container_name: medcore-mock-lab
+    environment:
+      MIRTH_HOST: mirth-connect
+      RESULTS_SERVICE_URL: http://results:3005
+    ports:
+      - "7001:7001"
+    networks:
+      - medcore-net
+
+  # ── Mock Pharmacy — Module 7 ──────────────────
+  mock-pharmacy:
+    build:
+      context: ./mock-systems/mock-pharmacy
+      dockerfile: Dockerfile
+    container_name: medcore-mock-pharmacy
+    environment:
+      MIRTH_HOST: mirth-connect
+    ports:
+      - "7002:7002"
+    networks:
+      - medcore-net
+
+  # ── Mock Radiology — Module 7 ─────────────────
+  mock-radiology:
+    build:
+      context: ./mock-systems/mock-radiology
+      dockerfile: Dockerfile
+    container_name: medcore-mock-radiology
+    environment:
+      MIRTH_HOST: mirth-connect
+    ports:
+      - "7003:7003"
+    networks:
+      - medcore-net
+
+  # ── Mock Systems Proxy — Module 7 ────────────
+  mock-proxy:
+    build:
+      context: ./mock-systems/proxy
+      dockerfile: Dockerfile
+    container_name: medcore-mock-proxy
+    environment:
+      PORT: 3008
+      MIRTH_HOST: mirth-connect
+      MIRTH_HTTPS_PORT: 8443
+    ports:
+      - "3008:3008"
+    networks:
+      - medcore-net
+
+  # ── Patient Portal — Module 8 ─────────────────
+  portal:
+    build:
+      context: ./services/portal
+      dockerfile: Dockerfile
+    container_name: medcore-portal
+    environment:
+      NODE_ENV: development
+      PORT: 3009
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medcore
+      DB_USER: medcore
+      DB_PASSWORD: medcore
+      FHIR_BASE_URL: http://hapi-fhir:8080/fhir
+      KEYCLOAK_URL: http://keycloak:8080
+    ports:
+      - "3009:3009"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medcore-net
+    volumes:
+      - ./services/portal:/app
+      - /app/node_modules
