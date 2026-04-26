@@ -1,160 +1,88 @@
-# MedCore EHR — Training Environment
+# MedCore EHR — Healthcare Integration Training Environment
 
-> A self-hosted healthcare integration training system built on real industry tools and standards.
-> **Purpose:** Learn the concepts behind Epic and healthcare integration engineering without needing Epic access.
+A complete Epic-equivalent EHR built for learning healthcare integration engineering. Built with real HL7 v2 messaging, Mirth Connect routing, HAPI FHIR R4, and a patient portal.
 
----
+## What This Is
 
-## System Requirements
+MedCore simulates the full clinical and financial workflow of a hospital EHR — the same workflows that Epic, Cerner, and other enterprise systems use in production. Every HL7 message, every integration pattern, and every clinical workflow is based on real healthcare IT standards.
 
-| Tool | Version | Check |
-|---|---|---|
-| Docker Desktop | 4.x+ | `docker --version` |
-| Docker Compose | v2+ | `docker compose version` |
-| 8 GB RAM (allocated to Docker) | — | Docker Desktop → Settings → Resources |
-| ~5 GB disk space | — | For images + data volumes |
+Built as a self-study program for Epic integration engineering certification.
 
-> ⚠️ **Mac users:** Open Docker Desktop → Settings → Resources and set Memory to at least **6 GB**.
-> Some images (HAPI FHIR, Keycloak) are memory-hungry.
+## Modules
 
----
+| Module | Epic Equivalent | Key Technology | Status |
+|--------|----------------|----------------|--------|
+| Registration / ADT | ADT/Registration | ADT^A01/A03/A08/A11 | ✅ Complete |
+| Scheduling | Cadence | SIU^S12/S15/S26 | ✅ Complete |
+| Orders (CPOE) | Beaker / Willow / Radiant | ORM^O01, RDE^O11 | ✅ Complete |
+| Results | Beaker Results / In Basket | ORU^R01, OBX segments | ✅ Complete |
+| Clinical Documentation | ClinDoc | MDM^T02, TXA segment | ✅ Complete |
+| Billing & Charging | Resolute | DFT^P03, X12 837/835 | ✅ Complete |
+| Mock External Systems | Vendor LIS/RIS/Pharmacy | MLLP, Mirth Connect | ✅ Complete |
+| Patient Portal | MyChart | FHIR R4, SMART on FHIR | ✅ Complete |
 
-## Quick Start
+## Tech Stack
+
+- **Frontend:** React 18, Tailwind CSS, Vite
+- **Backend:** Node.js microservices (one per clinical module)
+- **Database:** PostgreSQL with clinical schemas
+- **Integration Engine:** Mirth Connect 4.5.2
+- **FHIR Server:** HAPI FHIR R4
+- **Auth:** Keycloak (OAuth2 / SMART on FHIR)
+- **Message Queue:** RabbitMQ
+- **Infrastructure:** Docker Compose (19 containers)
+
+## HL7 Messages Implemented
+
+ADT^A01, ADT^A03, ADT^A04, ADT^A08, ADT^A11, SIU^S12, SIU^S15, SIU^S26, ORM^O01, RDE^O11, ORU^R01, MDM^T02, DFT^P03, BAR^P01, X12 270/271, X12 837, X12 835
+
+## How to Run
 
 ```bash
-# 1. Clone or unzip the project
-cd medcore
+git clone https://github.com/nixon-abuku/medcore-ehr.git
+cd medcore-ehr
 
-# 2. Start everything
 docker compose up -d
-
-# 3. Watch the logs (optional, useful to see startup progress)
-docker compose logs -f
-
-# 4. Wait ~2-3 minutes for all services to initialize
-# Then open: http://localhost:3000
 ```
 
----
+Open http://localhost:3000
 
 ## Service URLs
 
 | Service | URL | Credentials |
-|---|---|---|
-| **MedCore Frontend** | http://localhost:3000 | — |
-| **API Gateway** | http://localhost:3001/health | — |
-| **HAPI FHIR Server** | http://localhost:8080/fhir | — |
-| **Mirth Connect Admin** | https://localhost:8443 | admin / admin |
-| **Keycloak Admin** | http://localhost:8090 | admin / admin |
-| **RabbitMQ Dashboard** | http://localhost:15672 | guest / guest |
-| **PostgreSQL** | localhost:5432 | medcore / medcore |
+|---------|-----|-------------|
+| Frontend | http://localhost:3000 | — |
+| API Gateway | http://localhost:3001/health | — |
+| HAPI FHIR | http://localhost:8081/fhir | — |
+| Mirth Connect | https://localhost:8444 | admin / admin |
+| Keycloak | http://localhost:8090 | admin / admin |
+| RabbitMQ | http://localhost:15672 | guest / guest |
+| PostgreSQL | localhost:5432 | medcore / medcore |
 
-> For Mirth Connect: your browser will warn about a self-signed certificate. Click "Advanced" → "Proceed anyway."
+## End-to-End Message Flow
+Place lab order in MedCore
+↓
+ORM^O01 sent to Mirth Connect via MLLP
+↓
+Mirth routes to Mock Lab (LIS) on port 6662
+↓
+Mock Lab generates realistic values with LOINC codes
+↓
+ORU^R01 result sent back through Mirth
+↓
+Result appears automatically in Results Inbox
+with OBX values, abnormal flags (H/L/HH/LL)
 
----
+## What You Learn Building This
 
-## Module 0 — Acceptance Tests
-
-Run these after `docker compose up -d` to confirm everything is healthy.
-
-### Test 1: Gateway health
-```bash
-curl http://localhost:3001/health
-# Expected: {"status":"ok","service":"medcore-gateway",...}
-```
-
-### Test 2: FHIR server
-```bash
-curl http://localhost:8080/fhir/metadata | head -5
-# Expected: FHIR CapabilityStatement JSON
-```
-
-### Test 3: All containers running
-```bash
-docker compose ps
-# Expected: All containers with Status "running" or "healthy"
-```
-
-### Test 4: Frontend
-Open http://localhost:3000 in your browser.
-You should see the MedCore dashboard with all services shown as Online.
-
----
-
-## Common Commands
-
-```bash
-# Start all services
-docker compose up -d
-
-# Stop all services (keeps your data)
-docker compose down
-
-# Stop AND wipe all data (fresh start)
-docker compose down -v
-
-# View logs for a specific service
-docker compose logs -f gateway
-docker compose logs -f mirth-connect
-docker compose logs -f hapi-fhir
-
-# Restart a single service
-docker compose restart gateway
-
-# Open a shell inside a container
-docker compose exec postgres psql -U medcore -d medcore
-```
-
----
-
-## Project Structure
-
-```
-medcore/
-├── docker-compose.yml          ← The entire stack defined here
-├── README.md                   ← You are here
-├── db/
-│   └── init/
-│       └── 01_init.sql         ← Runs once on first postgres start
-├── services/
-│   └── gateway/                ← API Gateway (Node.js/Express)
-│       ├── index.js
-│       ├── package.json
-│       └── Dockerfile
-└── frontend/                   ← React dashboard (Vite + Tailwind)
-    ├── src/
-    │   ├── main.jsx
-    │   └── App.jsx
-    ├── index.html
-    ├── package.json
-    └── Dockerfile
-```
-
----
-
-## What Each Service Is Teaching You
-
-| Service | Real-world equivalent | What you learn |
-|---|---|---|
-| **HAPI FHIR** | Epic Interconnect / any FHIR endpoint | FHIR R4 resources, REST APIs, patient data |
-| **Mirth Connect** | Epic Bridges | HL7 v2 channels, transformers, routing |
-| **Keycloak** | Epic's auth / SMART on FHIR | OAuth2 flows, SMART scopes, tokens |
-| **RabbitMQ** | Epic's internal event bus | Async messaging, event-driven architecture |
-| **PostgreSQL** | Epic Chronicles (conceptually) | Data modeling, schemas, clinical data structures |
-
----
-
-## Next: Module 1 — Registration / ADT
-
-Once all tests pass, you're ready for Module 1.
-In Module 1 you will:
-- Build the patient registration UI and database schema
-- Generate real HL7 ADT messages (A01, A03, A08)
-- Route them through Mirth Connect channels
-- Sync patient data to the FHIR server as Patient and Encounter resources
-
-This is the **most fundamental workflow in all of healthcare IT.**
-Every downstream system — lab, pharmacy, billing, scheduling — depends on ADT.
+- HL7 v2 message structure and all major segment types (MSH, PID, PV1, ORC, OBR, OBX, TXA, FT1)
+- How Epic ADT, Cadence, Beaker, Willow, Radiant, and Resolute integrate
+- Mirth Connect channel building and JavaScript transformers
+- Placer/filler order number concept
+- MLLP protocol for HL7 transport
+- FHIR R4 resources and SMART on FHIR OAuth2 flow
+- X12 EDI transactions for healthcare billing
+- Full clinical workflow from patient registration through billing and patient portal
 
 ---
 
