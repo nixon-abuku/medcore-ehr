@@ -1,5 +1,5 @@
 # MedCore EHR — Progress Journal
-**Engineer:** Kenshi  
+**Engineer:** Nixon Abuku  
 **Company (simulated):** PR Seven — Healthcare Integration Consulting  
 **Goal:** Learn Epic integration engineering from scratch using open-source tools  
 **Updated:** April 27, 2026
