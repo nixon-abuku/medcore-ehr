@@ -24,7 +24,7 @@ function now() {
 
 function hl7Date(dateStr) {
   if (!dateStr) return '';
-  return dateStr.replace(/-/g, '').substring(0, 8);
+  return String(dateStr).substring(0, 10).replace(/-/g, '');
 }
 
 function safe(val) {

@@ -23,6 +23,25 @@ function StatusBadge({ status }) {
   return <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${map[status] || 'bg-gray-100 text-gray-600'}`}>{status}</span>;
 }
 
+// ── Field Component (defined OUTSIDE RegisterForm — this prevents the focus bug) ──
+function Field({ label, k, type='text', opts, required, form, set }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-500 mb-1">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {opts
+        ? <select value={form[k]} onChange={e => set(k, e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white">
+            <option value="">Select…</option>
+            {opts.map(o => <option key={o.value || o} value={o.value || o}>{o.label || o}</option>)}
+          </select>
+        : <input type={type} value={form[k]} onChange={e => set(k, e.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+      }
+    </div>
+  );
+}
+
 // ── Register Patient Form ─────────────────────────────────────
 function RegisterForm({ onSuccess, onCancel }) {
   const [form, setForm] = useState({
@@ -55,20 +74,6 @@ function RegisterForm({ onSuccess, onCancel }) {
     finally { setLoading(false); }
   };
 
-  const Field = ({ label, k, type='text', opts, required }) => (
-    <div>
-      <label className="block text-xs font-medium text-gray-500 mb-1">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
-      {opts
-        ? <select value={form[k]} onChange={e => set(k, e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white">
-            <option value="">Select…</option>
-            {opts.map(o => <option key={o.value || o} value={o.value || o}>{o.label || o}</option>)}
-          </select>
-        : <input type={type} value={form[k]} onChange={e => set(k, e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
-      }
-    </div>
-  );
-
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
       <div className="flex items-center justify-between mb-6">
@@ -84,36 +89,36 @@ function RegisterForm({ onSuccess, onCancel }) {
       {/* Demographics */}
       <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Demographics</h3>
       <div className="grid grid-cols-3 gap-3 mb-5">
-        <Field label="First Name" k="first_name" required />
-        <Field label="Middle Name" k="middle_name" />
-        <Field label="Last Name" k="last_name" required />
-        <Field label="Date of Birth" k="date_of_birth" type="date" required />
-        <Field label="Sex" k="sex" required opts={[{value:'M',label:'Male'},{value:'F',label:'Female'},{value:'O',label:'Other'},{value:'U',label:'Unknown'}]} />
-        <Field label="Marital Status" k="marital_status" opts={['Single','Married','Divorced','Widowed','Separated']} />
-        <Field label="Race" k="race" opts={['White','Black or African American','Asian','American Indian or Alaska Native','Native Hawaiian or Pacific Islander','Other','Unknown']} />
-        <Field label="Ethnicity" k="ethnicity" opts={['Not Hispanic or Latino','Hispanic or Latino','Unknown']} />
-        <Field label="Preferred Language" k="preferred_lang" opts={['English','Spanish','French','Mandarin','Arabic','Portuguese','Other']} />
+        <Field label="First Name" k="first_name" required form={form} set={set} />
+        <Field label="Middle Name" k="middle_name" form={form} set={set} />
+        <Field label="Last Name" k="last_name" required form={form} set={set} />
+        <Field label="Date of Birth" k="date_of_birth" type="date" required form={form} set={set} />
+        <Field label="Sex" k="sex" required opts={[{value:'M',label:'Male'},{value:'F',label:'Female'},{value:'O',label:'Other'},{value:'U',label:'Unknown'}]} form={form} set={set} />
+        <Field label="Marital Status" k="marital_status" opts={['Single','Married','Divorced','Widowed','Separated']} form={form} set={set} />
+        <Field label="Race" k="race" opts={['White','Black or African American','Asian','American Indian or Alaska Native','Native Hawaiian or Pacific Islander','Other','Unknown']} form={form} set={set} />
+        <Field label="Ethnicity" k="ethnicity" opts={['Not Hispanic or Latino','Hispanic or Latino','Unknown']} form={form} set={set} />
+        <Field label="Preferred Language" k="preferred_lang" opts={['English','Spanish','French','Mandarin','Arabic','Portuguese','Other']} form={form} set={set} />
       </div>
 
       {/* Contact */}
       <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Address & Contact</h3>
       <div className="grid grid-cols-3 gap-3 mb-5">
-        <div className="col-span-3"><Field label="Address Line 1" k="address_line1" /></div>
-        <Field label="City" k="city" />
-        <Field label="State" k="state" />
-        <Field label="ZIP" k="zip" />
-        <Field label="Phone (Home)" k="phone_home" />
-        <Field label="Phone (Mobile)" k="phone_mobile" />
-        <Field label="Email" k="email" type="email" />
+        <div className="col-span-3"><Field label="Address Line 1" k="address_line1" form={form} set={set} /></div>
+        <Field label="City" k="city" form={form} set={set} />
+        <Field label="State" k="state" form={form} set={set} />
+        <Field label="ZIP" k="zip" form={form} set={set} />
+        <Field label="Phone (Home)" k="phone_home" form={form} set={set} />
+        <Field label="Phone (Mobile)" k="phone_mobile" form={form} set={set} />
+        <Field label="Email" k="email" type="email" form={form} set={set} />
       </div>
 
       {/* Insurance */}
       <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Primary Insurance</h3>
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <Field label="Payer Name" k="payer_name" />
-        <Field label="Plan Name" k="plan_name" />
-        <Field label="Member ID" k="member_id" />
-        <Field label="Group Number" k="group_number" />
+        <Field label="Payer Name" k="payer_name" form={form} set={set} />
+        <Field label="Plan Name" k="plan_name" form={form} set={set} />
+        <Field label="Member ID" k="member_id" form={form} set={set} />
+        <Field label="Group Number" k="group_number" form={form} set={set} />
       </div>
 
       <div className="flex gap-3 pt-4 border-t border-gray-100">
@@ -432,7 +437,7 @@ function MessageLog() {
 
 // ── Main ADT Page ─────────────────────────────────────────────
 export default function ADTModule() {
-  const [view, setView]       = useState('census'); // census | register | search | log
+  const [view, setView]       = useState('census');
   const [admitPatient, setAdmitPatient] = useState(null);
   const [hl7CSN, setHL7CSN]   = useState(null);
   const [toast, setToast]     = useState('');
