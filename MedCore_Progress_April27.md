@@ -1,5 +1,5 @@
 # MedCore EHR — Progress Journal
-**Engineer:** Kenshi  
+**Engineer:** Nixon Abuku  
 **Company (simulated):** PR Seven — Healthcare Integration Consulting  
 **Goal:** Learn Epic integration engineering from scratch using open-source tools  
 **Updated:** April 27, 2026
@@ -28,7 +28,7 @@ MedCore is being built as if **PR Seven** (a simulated healthcare IT consulting 
 | Integration Engineer | Builds Mirth channels, writes filters and transformers, tests |
 | Support Engineer | Monitors production, troubleshoots issues, responds to tickets |
 
-Kenshi plays all roles in the Career Simulator, building a complete understanding of how real healthcare IT projects are delivered.
+Nixon Abuku plays all roles in the Career Simulator, building a complete understanding of how real healthcare IT projects are delivered.
 
 **What PR Seven provides to hospitals:**
 - Integration architecture design
@@ -264,10 +264,10 @@ When a downstream system isn't receiving data:
 
 ```bash
 # Go to main MedCore project
-cd /Users/kenshi/Desktop/medcoreipr/medcore
+cd /Users/Nixon Abuku/Desktop/medcoreipr/medcore
 
 # Go to Career Simulator
-cd /Users/kenshi/Desktop/medcoreipr/simulator
+cd /Users/Nixon Abuku/Desktop/medcoreipr/simulator
 
 # Start all containers
 docker compose up -d
