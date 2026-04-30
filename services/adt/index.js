@@ -107,6 +107,19 @@ app.get('/messages', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// ── Get single message by ID — for HL7 viewer ────────────────
+app.get('/messages/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM integration.message_log WHERE id = $1',
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Message not found' });
+    res.json({ message: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Health ───────────────────────────────────────────────────
 app.get('/health', async (req, res) => {

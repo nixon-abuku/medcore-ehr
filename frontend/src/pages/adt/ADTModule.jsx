@@ -23,7 +23,7 @@ function StatusBadge({ status }) {
   return <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${map[status] || 'bg-gray-100 text-gray-600'}`}>{status}</span>;
 }
 
-// ── Field Component (defined OUTSIDE RegisterForm — this prevents the focus bug) ──
+// ── Field Component ──────────────────────────────────────────
 function Field({ label, k, type='text', opts, required, form, set }) {
   return (
     <div>
@@ -86,7 +86,6 @@ function RegisterForm({ onSuccess, onCancel }) {
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-2 mb-4">{error}</div>}
 
-      {/* Demographics */}
       <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Demographics</h3>
       <div className="grid grid-cols-3 gap-3 mb-5">
         <Field label="First Name" k="first_name" required form={form} set={set} />
@@ -100,7 +99,6 @@ function RegisterForm({ onSuccess, onCancel }) {
         <Field label="Preferred Language" k="preferred_lang" opts={['English','Spanish','French','Mandarin','Arabic','Portuguese','Other']} form={form} set={set} />
       </div>
 
-      {/* Contact */}
       <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Address & Contact</h3>
       <div className="grid grid-cols-3 gap-3 mb-5">
         <div className="col-span-3"><Field label="Address Line 1" k="address_line1" form={form} set={set} /></div>
@@ -112,7 +110,6 @@ function RegisterForm({ onSuccess, onCancel }) {
         <Field label="Email" k="email" type="email" form={form} set={set} />
       </div>
 
-      {/* Insurance */}
       <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Primary Insurance</h3>
       <div className="grid grid-cols-2 gap-3 mb-6">
         <Field label="Payer Name" k="payer_name" form={form} set={set} />
@@ -270,6 +267,84 @@ function AdmitDialog({ patient, onSuccess, onCancel }) {
   );
 }
 
+// ── Update Demographics Dialog (NEW — fires ADT^A08) ──────────
+function UpdateDemographicsDialog({ patient, onSuccess, onCancel }) {
+  const [form, setForm] = useState({
+    phone_home:    patient.phone_home    || '',
+    phone_mobile:  patient.phone_mobile  || '',
+    phone_work:    patient.phone_work    || '',
+    email:         patient.email         || '',
+    address_line1: patient.address_line1 || '',
+    address_line2: patient.address_line2 || '',
+    city:          patient.city          || '',
+    state:         patient.state         || '',
+    zip:           patient.zip           || '',
+    marital_status:patient.marital_status|| '',
+    preferred_lang:patient.preferred_lang|| 'English',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const submit = async () => {
+    setLoading(true); setError('');
+    try {
+      const r = await fetch(`${API}/patients/${patient.mrn}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Update failed');
+      onSuccess(data.patient);
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 max-w-lg w-full">
+      <h3 className="font-bold text-gray-900 mb-1">Update Demographics</h3>
+      <p className="text-xs text-gray-400 mb-4">
+        {patient.first_name} {patient.last_name} · MRN: {patient.mrn}
+        <span className="ml-2 text-purple-600 font-medium">→ Fires ADT^A08</span>
+      </p>
+      {error && <div className="bg-red-50 text-red-700 text-xs rounded-lg px-3 py-2 mb-3">{error}</div>}
+
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Contact</h4>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <Field label="Phone (Home)"   k="phone_home"   form={form} set={set} />
+        <Field label="Phone (Mobile)" k="phone_mobile" form={form} set={set} />
+        <Field label="Phone (Work)"   k="phone_work"   form={form} set={set} />
+        <Field label="Email"          k="email" type="email" form={form} set={set} />
+      </div>
+
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Address</h4>
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="col-span-3"><Field label="Address Line 1" k="address_line1" form={form} set={set} /></div>
+        <div className="col-span-3"><Field label="Address Line 2" k="address_line2" form={form} set={set} /></div>
+        <Field label="City"  k="city"  form={form} set={set} />
+        <Field label="State" k="state" form={form} set={set} />
+        <Field label="ZIP"   k="zip"   form={form} set={set} />
+      </div>
+
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Other</h4>
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <Field label="Marital Status" k="marital_status" opts={['Single','Married','Divorced','Widowed','Separated']} form={form} set={set} />
+        <Field label="Preferred Language" k="preferred_lang" opts={['English','Spanish','French','Mandarin','Arabic','Portuguese','Other']} form={form} set={set} />
+      </div>
+
+      <div className="flex gap-3">
+        <button onClick={submit} disabled={loading}
+          className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-semibold rounded-xl py-2.5 text-sm">
+          {loading ? 'Updating…' : 'Save & Send A08'}
+        </button>
+        <button onClick={onCancel} className="px-4 border border-gray-200 rounded-xl text-sm text-gray-600">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
 // ── HL7 Viewer ────────────────────────────────────────────────
 function HL7Viewer({ csn }) {
   const [events, setEvents] = useState([]);
@@ -318,7 +393,7 @@ function HL7Viewer({ csn }) {
 }
 
 // ── Census View ───────────────────────────────────────────────
-function Census({ onDischarge, onViewHL7 }) {
+function Census({ onDischarge, onViewHL7, onUpdate }) {
   const [census, setCensus] = useState([]);
 
   const load = async () => {
@@ -370,6 +445,7 @@ function Census({ onDischarge, onViewHL7 }) {
                   <td className="px-5 py-3">
                     <div className="flex gap-2">
                       <button onClick={() => onViewHL7(enc.csn)} className="text-xs text-blue-600 hover:underline">HL7</button>
+                      <button onClick={() => onUpdate(enc)} className="text-xs text-purple-600 hover:underline">Update</button>
                       <button onClick={() => onDischarge(enc)} className="text-xs text-orange-600 hover:underline">Discharge</button>
                     </div>
                   </td>
@@ -384,7 +460,7 @@ function Census({ onDischarge, onViewHL7 }) {
 }
 
 // ── Message Log ───────────────────────────────────────────────
-function MessageLog() {
+function MessageLog({ onSelect }) {
   const [msgs, setMsgs] = useState([]);
 
   useEffect(() => {
@@ -417,8 +493,8 @@ function MessageLog() {
               </tr></thead>
               <tbody>
                 {msgs.map(m => (
-                  <tr key={m.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="px-5 py-2 font-mono font-semibold text-blue-700">{m.message_type}</td>
+                  <tr key={m.id} onClick={() => onSelect(m)} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer">
+                    <td className="px-5 py-2 font-mono font-semibold text-blue-700 hover:underline">{m.message_type}</td>
                     <td className="px-5 py-2 text-gray-500">{m.direction}</td>
                     <td className="px-5 py-2 font-mono text-gray-600">{m.patient_mrn || '—'}</td>
                     <td className="px-5 py-2">
@@ -439,8 +515,10 @@ function MessageLog() {
 export default function ADTModule() {
   const [view, setView]       = useState('census');
   const [admitPatient, setAdmitPatient] = useState(null);
+  const [updatePatient, setUpdatePatient] = useState(null);
   const [hl7CSN, setHL7CSN]   = useState(null);
   const [toast, setToast]     = useState('');
+  const [selectedMsg, setSelectedMsg] = useState(null);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 4000); };
 
@@ -452,6 +530,13 @@ export default function ADTModule() {
     if (r.ok) { showToast(`✅ ${enc.first_name} ${enc.last_name} discharged — ADT^A03 sent`); }
   };
 
+  const handleUpdate = async (enc) => {
+    const r = await fetch(`${API}/patients/${enc.mrn}`);
+    const d = await r.json();
+    if (d.patient) setUpdatePatient(d.patient);
+    else showToast('❌ Could not load patient');
+  };
+
   const tabs = [
     { id:'census',   label:'Census',           icon:'🛏' },
     { id:'register', label:'Register Patient',  icon:'➕' },
@@ -461,7 +546,6 @@ export default function ADTModule() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200 px-8 py-4">
         <div className="flex items-center gap-3 mb-4">
           <a href="/" className="text-gray-400 hover:text-gray-600 text-sm">← MedCore</a>
@@ -488,10 +572,8 @@ export default function ADTModule() {
         </div>
       </div>
 
-      {/* Toast */}
       {toast && <div className="fixed top-4 right-4 z-50 bg-gray-900 text-white text-sm rounded-xl px-5 py-3 shadow-xl">{toast}</div>}
 
-      {/* Admit Dialog */}
       {admitPatient && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40 p-4">
           <AdmitDialog
@@ -502,7 +584,16 @@ export default function ADTModule() {
         </div>
       )}
 
-      {/* HL7 Viewer Dialog */}
+      {updatePatient && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40 p-4">
+          <UpdateDemographicsDialog
+            patient={updatePatient}
+            onCancel={() => setUpdatePatient(null)}
+            onSuccess={(p) => { setUpdatePatient(null); showToast(`✅ ${p.first_name} ${p.last_name} updated — ADT^A08 sent`); }}
+          />
+        </div>
+      )}
+
       {hl7CSN && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-40 p-4">
           <div className="bg-gray-950 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
@@ -517,8 +608,44 @@ export default function ADTModule() {
           </div>
         </div>
       )}
+      {selectedMsg && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-40 p-4" onClick={() => setSelectedMsg(null)}>
+    <div className="bg-gray-950 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
+        <div>
+          <h3 className="text-white font-semibold text-sm">HL7 Message Viewer</h3>
+          <p className="text-gray-400 text-xs">
+            <span className="font-mono text-blue-300">{selectedMsg.message_type}</span>
+            {' · '}
+            {selectedMsg.direction}
+            {selectedMsg.patient_mrn && <> · MRN: <span className="font-mono">{selectedMsg.patient_mrn}</span></>}
+            {' · '}
+            {fmt(selectedMsg.created_at)}
+          </p>
+        </div>
+        <button onClick={() => setSelectedMsg(null)} className="text-gray-400 hover:text-white">✕</button>
+      </div>
+      <div className="p-4 max-h-[28rem] overflow-y-auto font-mono text-xs">
+        {selectedMsg.raw_message
+          ? selectedMsg.raw_message.split(/\r|\n/).filter(Boolean).map((seg, i) => {
+              const type = seg.substring(0, 3);
+              const colors = { MSH:'text-yellow-300', EVN:'text-purple-300', PID:'text-green-300', PV1:'text-blue-300', ORC:'text-pink-300', OBR:'text-orange-300', OBX:'text-cyan-300' };
+              const fields = seg.split('|');
+              return (
+                <div key={i} className="mb-1.5 break-all">
+                  <span className={`font-bold ${colors[type] || 'text-gray-300'}`}>{fields[0]}</span>
+                  <span className="text-gray-500">|</span>
+                  <span className="text-gray-300">{fields.slice(1).join('|')}</span>
+                </div>
+              );
+            })
+          : <div className="text-gray-500 italic">No raw HL7 body — this event was logged without a payload (e.g., PATIENT_REGISTRATION).</div>
+        }
+      </div>
+    </div>
+  </div>
+)}
 
-      {/* Content */}
       <div className="max-w-6xl mx-auto px-8 py-6">
         {view === 'census' && (
           <>
@@ -530,6 +657,7 @@ export default function ADTModule() {
             </div>
             <Census
               onDischarge={handleDischarge}
+              onUpdate={handleUpdate}
               onViewHL7={(csn) => setHL7CSN(csn)}
             />
           </>
@@ -559,7 +687,7 @@ export default function ADTModule() {
               <h2 className="font-semibold text-gray-900">HL7 Message Log</h2>
               <p className="text-xs text-gray-400 mt-0.5">Every ADT event that flows through MedCore is logged here. In real hospitals, integration teams monitor this constantly.</p>
             </div>
-            <MessageLog />
+            <MessageLog onSelect={setSelectedMsg} />
           </>
         )}
       </div>
