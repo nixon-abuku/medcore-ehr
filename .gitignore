@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Local backup files
+*.backup
+*.backup2
+
+# Node modules
+node_modules/
+
+# Environment files
+.env
+.env.local
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
