@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import { Activity } from 'lucide-react';
+import { Activity, UserPlus, Calendar, ClipboardList, FlaskConical, FileText, DollarSign, Network, UserCircle } from 'lucide-react';
 import ADTModule from './pages/adt/ADTModule.jsx';
 import SchedulingModule from './pages/scheduling/SchedulingModule.jsx';
 import OrdersModule from './pages/orders/OrdersModule.jsx';
@@ -11,20 +11,24 @@ import MockSystemsModule from './pages/mock-systems/MockSystemsModule.jsx';
 import PatientPortal from './pages/portal/PatientPortal.jsx';
 
 const MODULES = [
-  { id:'adt',           name:'Registration / ADT',    icon:'🏥', desc:'Patient identity, admit, discharge', color:'blue'    },
-  { id:'scheduling',    name:'Scheduling',             icon:'📅', desc:'Appointments, slots, SIU messages',  color:'purple'  },
-  { id:'orders',        name:'Orders (CPOE)',           icon:'📋', desc:'Lab, medications, imaging orders',   color:'green'   },
-  { id:'results',       name:'Results',                icon:'🔬', desc:'ORU^R01, OBX values, flags',         color:'yellow'  },
-  { id:'documentation', name:'Clinical Documentation', icon:'📝', desc:'Notes, vitals, problems, allergies', color:'red'     },
-  { id:'billing',       name:'Billing & Charging',     icon:'💲', desc:'DFT^P03, X12 837/835, claims',       color:'emerald' },
-  { id:'mock-systems',  name:'Mock External Systems',  icon:'🔌', desc:'Mirth channels, mock lab/pharm/rad', color:'indigo'  },
-  { id:'portal',        name:'Patient Portal',         icon:'👤', desc:'MyChart equiv. SMART on FHIR',       color:'cyan'    },
+  { id:'adt',           name:'Registration / ADT',     Icon:UserPlus,       desc:'Patient identity, admit, discharge', epic:'Prelude / ADT',           accent:'blue'    },
+  { id:'scheduling',    name:'Scheduling',             Icon:Calendar,       desc:'Appointments, slots, SIU messages',  epic:'Cadence',                 accent:'purple'  },
+  { id:'orders',        name:'Orders (CPOE)',          Icon:ClipboardList,  desc:'Lab, medications, imaging orders',   epic:'ASAP / OpTime / Beaker',  accent:'green'   },
+  { id:'results',       name:'Results',                Icon:FlaskConical,   desc:'ORU R01, OBX values, flags',         epic:'Beaker / Results Routing',accent:'amber'   },
+  { id:'documentation', name:'Clinical Documentation', Icon:FileText,       desc:'Notes, vitals, problems, allergies', epic:'Notes / Synopsis',        accent:'rose'    },
+  { id:'billing',       name:'Billing & Charging',     Icon:DollarSign,     desc:'DFT P03, X12 837/835, claims',       epic:'Resolute',                accent:'emerald' },
+  { id:'mock-systems',  name:'Mock External Systems',  Icon:Network,        desc:'Mirth channels, mock lab/pharm/rad', epic:'Bridges / Interconnect',  accent:'indigo'  },
+  { id:'portal',        name:'Patient Portal',         Icon:UserCircle,     desc:'MyChart equiv. SMART on FHIR',       epic:'MyChart',                 accent:'sky'     },
 ];
-const cMap = {
-  blue:'bg-blue-50 border-blue-300 hover:border-blue-500',purple:'bg-purple-50 border-purple-300 hover:border-purple-500',
-  green:'bg-green-50 border-green-300 hover:border-green-500',yellow:'bg-yellow-50 border-yellow-300 hover:border-yellow-500',
-  red:'bg-red-50 border-red-300 hover:border-red-500',emerald:'bg-emerald-50 border-emerald-300 hover:border-emerald-500',
-  indigo:'bg-indigo-50 border-indigo-300 hover:border-indigo-500',cyan:'bg-cyan-50 border-cyan-300 hover:border-cyan-500',
+const accentMap = {
+  blue:    { iconBg:'bg-blue-50',    iconText:'text-blue-600',    ring:'hover:ring-blue-200' },
+  purple:  { iconBg:'bg-purple-50',  iconText:'text-purple-600',  ring:'hover:ring-purple-200' },
+  green:   { iconBg:'bg-green-50',   iconText:'text-green-600',   ring:'hover:ring-green-200' },
+  amber:   { iconBg:'bg-amber-50',   iconText:'text-amber-600',   ring:'hover:ring-amber-200' },
+  rose:    { iconBg:'bg-rose-50',    iconText:'text-rose-600',    ring:'hover:ring-rose-200' },
+  emerald: { iconBg:'bg-emerald-50', iconText:'text-emerald-600', ring:'hover:ring-emerald-200' },
+  indigo:  { iconBg:'bg-indigo-50',  iconText:'text-indigo-600',  ring:'hover:ring-indigo-200' },
+  sky:     { iconBg:'bg-sky-50',     iconText:'text-sky-600',     ring:'hover:ring-sky-200' },
 };
 
 function Dashboard() {
@@ -65,19 +69,31 @@ function Dashboard() {
     <span>Mirth Connect</span>
   </div>
 </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {MODULES.map(mod=>(
-            <div key={mod.id} onClick={()=>navigate(`/${mod.id}`)}
-              className={`rounded-xl border-2 p-5 transition-all ${cMap[mod.color]} text-slate-800 cursor-pointer shadow-md hover:shadow-lg`}>
-              <div className="flex items-start justify-between mb-2">
-                <span className="text-2xl">{mod.icon}</span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">● Active</span>
-              </div>
-              <h4 className="font-semibold text-sm mb-1">{mod.name}</h4>
-              <p className="text-xs text-slate-500">{mod.desc}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+  {MODULES.map(mod => {
+    const a = accentMap[mod.accent];
+    const Icon = mod.Icon;
+    return (
+      <div
+        key={mod.id}
+        onClick={() => navigate('/' + mod.id)}
+        className={`group bg-white rounded-xl border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 hover:ring-2 ${a.ring}`}
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div className={`w-10 h-10 ${a.iconBg} rounded-lg flex items-center justify-center`}>
+            <Icon className={`w-5 h-5 ${a.iconText}`} />
+          </div>
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">● Active</span>
         </div>
+        <h4 className="font-semibold text-sm text-gray-900 mb-1">{mod.name}</h4>
+        <p className="text-xs text-gray-500 mb-3 leading-relaxed">{mod.desc}</p>
+        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">
+          Epic equivalent: <span className="text-gray-600 normal-case font-normal">{mod.epic}</span>
+        </p>
+      </div>
+    );
+  })}
+</div>
         <div className="flex flex-wrap gap-3">
           {[{label:'Patient Portal',url:'/portal',note:'MyChart equiv.'},{label:'Mirth Connect',url:'https://localhost:8444',note:'admin/admin'},{label:'FHIR Server',url:'http://localhost:8081/fhir/metadata',note:'R4'},{label:'Keycloak',url:'http://localhost:8090',note:'admin/admin'}].map((l,i)=>(
             <a key={i} href={l.url} target={l.url.startsWith('http')&&!l.url.includes('localhost:3000')?'_blank':'_self'} rel="noreferrer" className="flex flex-col bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-4 py-3">
