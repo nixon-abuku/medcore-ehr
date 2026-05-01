@@ -209,17 +209,6 @@ function Dashboard() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Top bar */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
-        <div className="px-8 py-3 flex items-center justify-between">
-          <span className="font-medium text-gray-900 text-sm">Overview</span>
-          <div className="flex items-center gap-2 text-xs bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5">
-            <span className={`w-1.5 h-1.5 rounded-full ${status ? 'bg-green-500' : 'bg-amber-400 animate-pulse'}`}></span>
-            <span className="text-gray-600">{status ? 'All systems healthy' : 'Connecting...'}</span>
-          </div>
-        </div>
-      </header>
-
       <main className="flex-1 px-8 py-8">
         <div className="flex gap-6 items-start">
           {/* Left: main content */}
