@@ -32,16 +32,21 @@ function Dashboard() {
   useEffect(()=>{fetch('/api/health').then(r=>r.json()).then(setStatus).catch(()=>{});}, []);
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="border-b border-white/10 bg-white/5 backdrop-blur px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center text-lg font-bold">M</div>
-          <div><h1 className="text-lg font-semibold">MedCore EHR</h1><p className="text-xs text-blue-300">Healthcare Integration Training Environment</p></div>
-        </div>
-        <div className="flex items-center gap-2 text-xs">
-          <span className={`w-2 h-2 rounded-full ${status?'bg-green-400':'bg-yellow-400 animate-pulse'}`}></span>
-          <span className="text-white/60">{status?'All systems online':'Connecting…'}</span>
-        </div>
-      </header>
+<header className="bg-white border-b border-gray-200">
+  <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white text-lg font-bold">M</div>
+      <div>
+        <h1 className="text-base font-semibold text-gray-900">MedCore EHR</h1>
+        <p className="text-xs text-gray-500">Healthcare Integration Training Environment</p>
+      </div>
+    </div>
+    <div className="flex items-center gap-2 text-xs">
+      <span className={`w-2 h-2 rounded-full ${status ? 'bg-green-500' : 'bg-amber-400 animate-pulse'}`}></span>
+      <span className="text-gray-600">{status ? 'All systems online' : 'Connecting…'}</span>
+    </div>
+  </div>
+</header>
       <main className="max-w-6xl mx-auto px-8 py-10">
         <div className="bg-green-600/20 border border-green-500/30 rounded-2xl p-6 mb-8">
           <h2 className="text-2xl font-bold mb-1">Modules 1–8 Active 🏥📅📋🔬📝💲🔌👤</h2>
