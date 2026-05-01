@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { Activity } from 'lucide-react';
 import ADTModule from './pages/adt/ADTModule.jsx';
 import SchedulingModule from './pages/scheduling/SchedulingModule.jsx';
 import OrdersModule from './pages/orders/OrdersModule.jsx';
@@ -32,8 +33,8 @@ function Dashboard() {
   useEffect(()=>{fetch('/api/health').then(r=>r.json()).then(setStatus).catch(()=>{});}, []);
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-<header className="bg-white border-b border-gray-200">
-  <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+      <header className="bg-white border-b border-gray-200">
+         <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
     <div className="flex items-center gap-3">
       <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white text-lg font-bold">M</div>
       <div>
@@ -48,10 +49,22 @@ function Dashboard() {
   </div>
 </header>
       <main className="max-w-6xl mx-auto px-8 py-10">
-        <div className="bg-green-600/20 border border-green-500/30 rounded-2xl p-6 mb-8">
-          <h2 className="text-2xl font-bold mb-1">Modules 1–8 Active 🏥📅📋🔬📝💲🔌👤</h2>
-          <p className="text-green-200 text-sm">Full clinical + financial + integration + patient portal workflow.</p>
-        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 mb-8 flex items-center gap-4 shadow-sm">
+  <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+    <Activity className="w-5 h-5 text-green-600" />
+  </div>
+  <div className="flex-1">
+    <h2 className="text-sm font-semibold text-gray-900">All 8 modules active</h2>
+    <p className="text-xs text-gray-500 mt-0.5">Full clinical, financial, integration, and patient portal workflow online.</p>
+  </div>
+  <div className="hidden md:flex items-center gap-2 text-xs text-gray-400">
+    <span>HL7 v2</span>
+    <span className="text-gray-300">·</span>
+    <span>FHIR R4</span>
+    <span className="text-gray-300">·</span>
+    <span>Mirth Connect</span>
+  </div>
+</div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {MODULES.map(mod=>(
             <div key={mod.id} onClick={()=>navigate(`/${mod.id}`)}
