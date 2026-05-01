@@ -3,8 +3,7 @@
 **/.DS_Store
 
 # Local backup files
-*.backup
-*.backup2
+*.backup*
 
 # Node modules
 node_modules/
