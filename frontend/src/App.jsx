@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import { Activity, UserPlus, Calendar, ClipboardList, FlaskConical, FileText, DollarSign, Network, UserCircle, ExternalLink } from 'lucide-react';
+import {
+  Activity, UserPlus, Calendar, ClipboardList, FlaskConical,
+  FileText, DollarSign, Network, UserCircle, ExternalLink
+} from 'lucide-react';
+import Layout from './Layout.jsx';
 import ADTModule from './pages/adt/ADTModule.jsx';
 import SchedulingModule from './pages/scheduling/SchedulingModule.jsx';
 import OrdersModule from './pages/orders/OrdersModule.jsx';
@@ -10,7 +14,6 @@ import BillingModule from './pages/billing/BillingModule.jsx';
 import MockSystemsModule from './pages/mock-systems/MockSystemsModule.jsx';
 import PatientPortal from './pages/portal/PatientPortal.jsx';
 
-// Dev-link URLs split to avoid markdown linkifier corruption when pasted in chat.
 const PORTAL_URL   = '/portal';
 const MIRTH_URL    = 'https' + '://' + 'localhost' + ':8444';
 const FHIR_URL     = 'http'  + '://' + 'localhost' + ':8081/fhir/metadata';
@@ -53,46 +56,50 @@ function Dashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white text-lg font-bold">M</div>
-            <div>
-              <h1 className="text-base font-semibold text-gray-900">MedCore EHR</h1>
-              <p className="text-xs text-gray-500">Healthcare Integration Training Environment</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className={`w-2 h-2 rounded-full ${status ? 'bg-green-500' : 'bg-amber-400 animate-pulse'}`}></span>
-            <span className="text-gray-600">{status ? 'All systems online' : 'Connecting…'}</span>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
+        <div className="px-8 py-3 flex items-center justify-between">
+          <span className="font-medium text-gray-900 text-sm">Overview</span>
+          <div className="flex items-center gap-2 text-xs bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full ${status ? 'bg-green-500' : 'bg-amber-400 animate-pulse'}`}></span>
+            <span className="text-gray-600">{status ? 'All systems healthy' : 'Connecting...'}</span>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-8 py-10">
-        {/* Status banner */}
-        <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 mb-8 flex items-center gap-4 shadow-sm">
-          <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-            <Activity className="w-5 h-5 text-green-600" />
+      <main className="flex-1 px-8 py-8">
+        <div className="bg-gradient-to-br from-slate-800 to-blue-900 rounded-2xl p-8 mb-8 relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-5 h-5 rounded-full bg-green-400 flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="text-green-400 text-sm font-semibold">Platform Healthy</span>
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-2">All modules are active</h1>
+            <p className="text-slate-300 text-sm mb-6">Your training environment is fully operational and ready for integration practice.</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5 text-xs text-white">
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                8 / 8 Modules Active
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5 text-xs text-white">
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                All Systems Online
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5 text-xs text-white">
+                HL7 v2 · FHIR R4 · Mirth Connect
+              </div>
+            </div>
           </div>
-          <div className="flex-1">
-            <h2 className="text-sm font-semibold text-gray-900">All 8 modules active</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Full clinical, financial, integration, and patient portal workflow online.</p>
-          </div>
-          <div className="hidden md:flex items-center gap-2 text-xs text-gray-400">
-            <span>HL7 v2</span>
-            <span className="text-gray-300">·</span>
-            <span>FHIR R4</span>
-            <span className="text-gray-300">·</span>
-            <span>Mirth Connect</span>
-          </div>
+          <div className="absolute right-12 top-1/2 -translate-y-1/2 w-28 h-28 bg-blue-400/30 rounded-full"></div>
+          <div className="absolute right-8 top-1/2 -translate-y-1/2 w-20 h-20 bg-blue-500/20 rounded-full blur-xl"></div>
         </div>
 
-        {/* Module grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          {MODULES.map(mod => {
+        <div className="grid grid-cols-4 gap-4 mb-8">
+          {MODULES.map((mod, index) => {
             const a = accentMap[mod.accent];
             const Icon = mod.Icon;
             return (
@@ -105,42 +112,51 @@ function Dashboard() {
                   <div className={`w-10 h-10 ${a.iconBg} rounded-lg flex items-center justify-center`}>
                     <Icon className={`w-5 h-5 ${a.iconText}`} />
                   </div>
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">● Active</span>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">Active</span>
                 </div>
+                <div className="text-[10px] text-gray-400 font-medium mb-0.5">{index + 1}.</div>
                 <h4 className="font-semibold text-sm text-gray-900 mb-1">{mod.name}</h4>
                 <p className="text-xs text-gray-500 mb-3 leading-relaxed">{mod.desc}</p>
                 <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">
-                  Epic equivalent: <span className="text-gray-600 normal-case font-normal">{mod.epic}</span>
+                  Epic: <span className="text-gray-600 normal-case font-normal">{mod.epic}</span>
                 </p>
               </div>
             );
           })}
         </div>
 
-        {/* Developer access footer */}
-        <div className="border-t border-gray-200 pt-6">
-          <p className="text-[11px] uppercase tracking-wider text-gray-400 font-medium mb-3">Developer access</p>
-          <div className="flex flex-wrap gap-2">
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">Developer Access &amp; Quick Links</h3>
+          <div className="grid grid-cols-4 gap-4">
             {DEV_LINKS.map((l, i) => (
               <a
                 key={i}
                 href={l.url}
                 target={l.external ? '_blank' : '_self'}
                 rel="noreferrer"
-                className="flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 transition-colors"
+                className="flex flex-col items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group"
               >
-                <span className="text-xs font-medium text-gray-700">{l.label}</span>
-                <span className="text-[10px] text-gray-400">{l.note}</span>
-                <ExternalLink className="w-3 h-3 text-gray-400" />
+                <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
+                  <ExternalLink className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
+                </div>
+                <div className="text-center">
+                  <div className="text-xs font-semibold text-gray-900">{l.label}</div>
+                  <div className="text-[10px] text-gray-500 mt-0.5">{l.note}</div>
+                </div>
+                <div className="w-full text-center text-[10px] font-medium text-blue-600 bg-blue-50 group-hover:bg-blue-100 border border-blue-200 rounded-lg py-1.5 transition-colors">
+                  Open
+                </div>
               </a>
             ))}
           </div>
         </div>
 
-        {/* Project footer */}
-        <footer className="mt-12 pt-6 border-t border-gray-100 text-[11px] text-gray-400 flex items-center justify-between">
+        <footer className="text-[11px] text-gray-400 flex items-center justify-between py-2">
           <span>MedCore EHR · Self-built healthcare integration training environment</span>
-          <span>Not for clinical or production use</span>
+          <div className="flex items-center gap-3">
+            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Training</span>
+            <span>Not for clinical or production use</span>
+          </div>
         </footer>
       </main>
     </div>
@@ -150,17 +166,19 @@ function Dashboard() {
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/adt/*" element={<ADTModule />} />
-        <Route path="/scheduling/*" element={<SchedulingModule />} />
-        <Route path="/orders/*" element={<OrdersModule />} />
-        <Route path="/results/*" element={<ResultsModule />} />
-        <Route path="/documentation/*" element={<DocumentationModule />} />
-        <Route path="/billing/*" element={<BillingModule />} />
-        <Route path="/mock-systems/*" element={<MockSystemsModule />} />
-        <Route path="/portal/*" element={<PatientPortal />} />
-      </Routes>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/adt/*" element={<ADTModule />} />
+          <Route path="/scheduling/*" element={<SchedulingModule />} />
+          <Route path="/orders/*" element={<OrdersModule />} />
+          <Route path="/results/*" element={<ResultsModule />} />
+          <Route path="/documentation/*" element={<DocumentationModule />} />
+          <Route path="/billing/*" element={<BillingModule />} />
+          <Route path="/mock-systems/*" element={<MockSystemsModule />} />
+          <Route path="/portal/*" element={<PatientPortal />} />
+        </Routes>
+      </Layout>
     </BrowserRouter>
   );
 }
