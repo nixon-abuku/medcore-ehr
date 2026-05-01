@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import { Activity, UserPlus, Calendar, ClipboardList, FlaskConical, FileText, DollarSign, Network, UserCircle } from 'lucide-react';
+import { Activity, UserPlus, Calendar, ClipboardList, FlaskConical, FileText, DollarSign, Network, UserCircle, ExternalLink } from 'lucide-react';
 import ADTModule from './pages/adt/ADTModule.jsx';
 import SchedulingModule from './pages/scheduling/SchedulingModule.jsx';
 import OrdersModule from './pages/orders/OrdersModule.jsx';
@@ -9,6 +9,19 @@ import DocumentationModule from './pages/documentation/DocumentationModule.jsx';
 import BillingModule from './pages/billing/BillingModule.jsx';
 import MockSystemsModule from './pages/mock-systems/MockSystemsModule.jsx';
 import PatientPortal from './pages/portal/PatientPortal.jsx';
+
+// Dev-link URLs split to avoid markdown linkifier corruption when pasted in chat.
+const PORTAL_URL   = '/portal';
+const MIRTH_URL    = 'https' + '://' + 'localhost' + ':8444';
+const FHIR_URL     = 'http'  + '://' + 'localhost' + ':8081/fhir/metadata';
+const KEYCLOAK_URL = 'http'  + '://' + 'localhost' + ':8090';
+
+const DEV_LINKS = [
+  { label: 'Patient Portal', url: PORTAL_URL,   note: 'MyChart equiv.', external: false },
+  { label: 'Mirth Connect',  url: MIRTH_URL,    note: 'admin/admin',    external: true  },
+  { label: 'FHIR Server',    url: FHIR_URL,     note: 'R4',             external: true  },
+  { label: 'Keycloak',       url: KEYCLOAK_URL, note: 'admin/admin',    external: true  },
+];
 
 const MODULES = [
   { id:'adt',           name:'Registration / ADT',     Icon:UserPlus,       desc:'Patient identity, admit, discharge', epic:'Prelude / ADT',           accent:'blue'    },
@@ -20,6 +33,7 @@ const MODULES = [
   { id:'mock-systems',  name:'Mock External Systems',  Icon:Network,        desc:'Mirth channels, mock lab/pharm/rad', epic:'Bridges / Interconnect',  accent:'indigo'  },
   { id:'portal',        name:'Patient Portal',         Icon:UserCircle,     desc:'MyChart equiv. SMART on FHIR',       epic:'MyChart',                 accent:'sky'     },
 ];
+
 const accentMap = {
   blue:    { iconBg:'bg-blue-50',    iconText:'text-blue-600',    ring:'hover:ring-blue-200' },
   purple:  { iconBg:'bg-purple-50',  iconText:'text-purple-600',  ring:'hover:ring-purple-200' },
@@ -34,74 +48,100 @@ const accentMap = {
 function Dashboard() {
   const [status, setStatus] = useState(null);
   const navigate = useNavigate();
-  useEffect(()=>{fetch('/api/health').then(r=>r.json()).then(setStatus).catch(()=>{});}, []);
+  useEffect(() => {
+    fetch('/api/health').then(r => r.json()).then(setStatus).catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* Header */}
       <header className="bg-white border-b border-gray-200">
-         <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
-    <div className="flex items-center gap-3">
-      <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white text-lg font-bold">M</div>
-      <div>
-        <h1 className="text-base font-semibold text-gray-900">MedCore EHR</h1>
-        <p className="text-xs text-gray-500">Healthcare Integration Training Environment</p>
-      </div>
-    </div>
-    <div className="flex items-center gap-2 text-xs">
-      <span className={`w-2 h-2 rounded-full ${status ? 'bg-green-500' : 'bg-amber-400 animate-pulse'}`}></span>
-      <span className="text-gray-600">{status ? 'All systems online' : 'Connecting…'}</span>
-    </div>
-  </div>
-</header>
-      <main className="max-w-6xl mx-auto px-8 py-10">
-        <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 mb-8 flex items-center gap-4 shadow-sm">
-  <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-    <Activity className="w-5 h-5 text-green-600" />
-  </div>
-  <div className="flex-1">
-    <h2 className="text-sm font-semibold text-gray-900">All 8 modules active</h2>
-    <p className="text-xs text-gray-500 mt-0.5">Full clinical, financial, integration, and patient portal workflow online.</p>
-  </div>
-  <div className="hidden md:flex items-center gap-2 text-xs text-gray-400">
-    <span>HL7 v2</span>
-    <span className="text-gray-300">·</span>
-    <span>FHIR R4</span>
-    <span className="text-gray-300">·</span>
-    <span>Mirth Connect</span>
-  </div>
-</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-  {MODULES.map(mod => {
-    const a = accentMap[mod.accent];
-    const Icon = mod.Icon;
-    return (
-      <div
-        key={mod.id}
-        onClick={() => navigate('/' + mod.id)}
-        className={`group bg-white rounded-xl border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 hover:ring-2 ${a.ring}`}
-      >
-        <div className="flex items-start justify-between mb-4">
-          <div className={`w-10 h-10 ${a.iconBg} rounded-lg flex items-center justify-center`}>
-            <Icon className={`w-5 h-5 ${a.iconText}`} />
+        <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white text-lg font-bold">M</div>
+            <div>
+              <h1 className="text-base font-semibold text-gray-900">MedCore EHR</h1>
+              <p className="text-xs text-gray-500">Healthcare Integration Training Environment</p>
+            </div>
           </div>
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">● Active</span>
+          <div className="flex items-center gap-2 text-xs">
+            <span className={`w-2 h-2 rounded-full ${status ? 'bg-green-500' : 'bg-amber-400 animate-pulse'}`}></span>
+            <span className="text-gray-600">{status ? 'All systems online' : 'Connecting…'}</span>
+          </div>
         </div>
-        <h4 className="font-semibold text-sm text-gray-900 mb-1">{mod.name}</h4>
-        <p className="text-xs text-gray-500 mb-3 leading-relaxed">{mod.desc}</p>
-        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">
-          Epic equivalent: <span className="text-gray-600 normal-case font-normal">{mod.epic}</span>
-        </p>
-      </div>
-    );
-  })}
-</div>
-        <div className="flex flex-wrap gap-3">
-          {[{label:'Patient Portal',url:'/portal',note:'MyChart equiv.'},{label:'Mirth Connect',url:'https://localhost:8444',note:'admin/admin'},{label:'FHIR Server',url:'http://localhost:8081/fhir/metadata',note:'R4'},{label:'Keycloak',url:'http://localhost:8090',note:'admin/admin'}].map((l,i)=>(
-            <a key={i} href={l.url} target={l.url.startsWith('http')&&!l.url.includes('localhost:3000')?'_blank':'_self'} rel="noreferrer" className="flex flex-col bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-4 py-3">
-              <span className="text-sm font-medium text-white">{l.label} ↗</span>
-              <span className="text-xs text-white/40">{l.note}</span>
-            </a>
-          ))}
+      </header>
+
+      <main className="max-w-6xl mx-auto px-8 py-10">
+        {/* Status banner */}
+        <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 mb-8 flex items-center gap-4 shadow-sm">
+          <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+            <Activity className="w-5 h-5 text-green-600" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold text-gray-900">All 8 modules active</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Full clinical, financial, integration, and patient portal workflow online.</p>
+          </div>
+          <div className="hidden md:flex items-center gap-2 text-xs text-gray-400">
+            <span>HL7 v2</span>
+            <span className="text-gray-300">·</span>
+            <span>FHIR R4</span>
+            <span className="text-gray-300">·</span>
+            <span>Mirth Connect</span>
+          </div>
         </div>
+
+        {/* Module grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          {MODULES.map(mod => {
+            const a = accentMap[mod.accent];
+            const Icon = mod.Icon;
+            return (
+              <div
+                key={mod.id}
+                onClick={() => navigate('/' + mod.id)}
+                className={`group bg-white rounded-xl border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 hover:ring-2 ${a.ring}`}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-10 h-10 ${a.iconBg} rounded-lg flex items-center justify-center`}>
+                    <Icon className={`w-5 h-5 ${a.iconText}`} />
+                  </div>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">● Active</span>
+                </div>
+                <h4 className="font-semibold text-sm text-gray-900 mb-1">{mod.name}</h4>
+                <p className="text-xs text-gray-500 mb-3 leading-relaxed">{mod.desc}</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">
+                  Epic equivalent: <span className="text-gray-600 normal-case font-normal">{mod.epic}</span>
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Developer access footer */}
+        <div className="border-t border-gray-200 pt-6">
+          <p className="text-[11px] uppercase tracking-wider text-gray-400 font-medium mb-3">Developer access</p>
+          <div className="flex flex-wrap gap-2">
+            {DEV_LINKS.map((l, i) => (
+              <a
+                key={i}
+                href={l.url}
+                target={l.external ? '_blank' : '_self'}
+                rel="noreferrer"
+                className="flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 transition-colors"
+              >
+                <span className="text-xs font-medium text-gray-700">{l.label}</span>
+                <span className="text-[10px] text-gray-400">{l.note}</span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Project footer */}
+        <footer className="mt-12 pt-6 border-t border-gray-100 text-[11px] text-gray-400 flex items-center justify-between">
+          <span>MedCore EHR · Self-built healthcare integration training environment</span>
+          <span>Not for clinical or production use</span>
+        </footer>
       </main>
     </div>
   );
