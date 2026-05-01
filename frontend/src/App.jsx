@@ -85,11 +85,11 @@ function RightRail({ health }) {
   const recent  = messages.slice(0, 6);
 
   const systemItems = [
-    { label: 'Application',      ok: !!health },
-    { label: 'Database',         ok: health?.db === 'ok' },
-    { label: 'Interface Engine', ok: true  },
-    { label: 'External Services',ok: true  },
-  ];
+  { label: 'Application',      ok: health?.status === 'ok' },
+  { label: 'Database', ok: health?.dependencies?.database === 'ok' },
+  { label: 'Interface Engine', ok: true  },
+  { label: 'External Services',ok: true  },
+];
 
   return (
     <div className="w-80 flex-shrink-0 space-y-4">
