@@ -31,7 +31,7 @@ function Dashboard() {
   const navigate = useNavigate();
   useEffect(()=>{fetch('/api/health').then(r=>r.json()).then(setStatus).catch(()=>{});}, []);
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-950 text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="border-b border-white/10 bg-white/5 backdrop-blur px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center text-lg font-bold">M</div>
